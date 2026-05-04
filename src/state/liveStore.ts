@@ -9,14 +9,8 @@ import {
   setActiveTripId,
 } from '@/lib/db';
 import { startTracking, stopTracking } from '@/lib/locationTask';
-import {
-  PAUSE_THRESHOLD_MPS,
-  PAUSE_WINDOW_MS,
-  isAutoPaused,
-  sanitizeSpeed,
-  smoothedSpeed,
-} from '@/lib/speed';
-import { totalDistance } from '@/lib/distance';
+import { isAutoPaused, smoothedSpeed } from '@/lib/speed';
+import { computeTripStats } from '@/lib/stats';
 import type { Point, Trip } from '@/lib/types';
 import { format } from 'date-fns';
 
@@ -27,6 +21,7 @@ type LiveState = {
   distanceM: number;
   movingTimeS: number;
   pausedTimeS: number;
+  elevationGainM: number;
   isPaused: boolean;
   currentSpeed: number; // smoothed, m/s
   lastTickMs: number | null;
@@ -52,6 +47,7 @@ const INITIAL: Omit<
   distanceM: 0,
   movingTimeS: 0,
   pausedTimeS: 0,
+  elevationGainM: 0,
   isPaused: false,
   currentSpeed: 0,
   lastTickMs: null,
@@ -64,31 +60,21 @@ function recomputeDerived(
   points: Point[],
 ): Pick<
   LiveState,
-  'distanceM' | 'movingTimeS' | 'pausedTimeS' | 'isPaused' | 'currentSpeed' | 'pointCount'
+  | 'distanceM'
+  | 'movingTimeS'
+  | 'pausedTimeS'
+  | 'elevationGainM'
+  | 'isPaused'
+  | 'currentSpeed'
+  | 'pointCount'
 > {
-  let movingTimeS = 0;
-  let pausedTimeS = 0;
-  for (let i = 1; i < points.length; i++) {
-    const prev = points[i - 1];
-    const cur = points[i];
-    const dt = (cur.timestamp - prev.timestamp) / 1000;
-    if (dt <= 0) continue;
-    const cutoff = cur.timestamp - PAUSE_WINDOW_MS;
-    let sum = 0;
-    let count = 0;
-    for (let j = i; j >= 0 && points[j].timestamp >= cutoff; j--) {
-      sum += sanitizeSpeed(points[j].speed);
-      count += 1;
-    }
-    const avg = sum / count;
-    if (avg < PAUSE_THRESHOLD_MPS) pausedTimeS += dt;
-    else movingTimeS += dt;
-  }
+  const stats = computeTripStats(points);
   return {
-    pointCount: points.length,
-    distanceM: totalDistance(points),
-    movingTimeS,
-    pausedTimeS,
+    pointCount: stats.pointCount,
+    distanceM: stats.distanceM,
+    movingTimeS: stats.movingTimeS,
+    pausedTimeS: stats.pausedTimeS,
+    elevationGainM: stats.elevationGainM,
     isPaused: isAutoPaused(points),
     currentSpeed: smoothedSpeed(points),
   };

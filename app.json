@@ -11,7 +11,10 @@
       "bundleIdentifier": "dev.milosptr.triptracker",
       "supportsTablet": false,
       "infoPlist": {
-        "UIBackgroundModes": ["location", "fetch"],
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ],
         "NSLocationAlwaysAndWhenInUseUsageDescription": "TripTracker records your route and speed during trips, including when the app is backgrounded.",
         "NSLocationWhenInUseUsageDescription": "TripTracker records your route and speed during trips.",
         "ITSAppUsesNonExemptEncryption": false
@@ -31,6 +34,24 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d6705b91-6e4c-42f2-82fe-02b1397e16c1"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/d6705b91-6e4c-42f2-82fe-02b1397e16c1"
+    },
+    "android": {
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     }
   }
 }

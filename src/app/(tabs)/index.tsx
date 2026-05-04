@@ -17,6 +17,7 @@ export default function LiveScreen() {
   const points = useLiveStore((s) => s.points);
   const distanceM = useLiveStore((s) => s.distanceM);
   const movingTimeS = useLiveStore((s) => s.movingTimeS);
+  const elevationGainM = useLiveStore((s) => s.elevationGainM);
   const isPaused = useLiveStore((s) => s.isPaused);
   const currentSpeed = useLiveStore((s) => s.currentSpeed);
   const errorMessage = useLiveStore((s) => s.errorMessage);
@@ -41,16 +42,26 @@ export default function LiveScreen() {
     }
   }, [errorMessage, setError]);
 
-  const stats: Stat[] = useMemo(
+  const primaryStats: Stat[] = useMemo(
     () => [
       { label: 'Distance', value: `${formatKm(distanceM)} km` },
       { label: 'Moving time', value: formatDuration(movingTimeS) },
+    ],
+    [distanceM, movingTimeS],
+  );
+
+  const secondaryStats: Stat[] = useMemo(
+    () => [
       {
         label: 'Avg',
         value: movingTimeS > 0 ? `${Math.round(mpsToKmh(distanceM / movingTimeS))} km/h` : '— km/h',
       },
+      {
+        label: 'Climb',
+        value: elevationGainM > 0 ? `+${Math.round(elevationGainM)} m` : '— m',
+      },
     ],
-    [distanceM, movingTimeS],
+    [distanceM, movingTimeS, elevationGainM],
   );
 
   const onPressPrimary = () => {
@@ -68,7 +79,8 @@ export default function LiveScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.container}>
         <SpeedDisplay speedMps={currentSpeed} isPaused={isPaused} />
-        <StatsRow stats={stats} />
+        <StatsRow stats={primaryStats} />
+        <StatsRow stats={secondaryStats} />
         <View style={styles.mapBox}>
           <TripMap points={points} style={styles.map} />
           {points.length === 0 ? (

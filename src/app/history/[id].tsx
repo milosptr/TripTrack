@@ -21,6 +21,8 @@ import { mpsToKmh } from '@/lib/speed';
 import { computeTripStats, formatDuration } from '@/lib/stats';
 import { segmentByDay } from '@/lib/segments';
 import { buildGpxXml, gpxFilename } from '@/lib/gpx';
+import { extractPauses } from '@/lib/pauses';
+import { reverseGeocode, formatPlace, type PlaceLabel } from '@/lib/geocode';
 import { COLORS, RADIUS, SPACING } from '@/lib/theme';
 import type { Point, Trip } from '@/lib/types';
 
@@ -29,12 +31,19 @@ type LoadState =
   | { kind: 'missing' }
   | { kind: 'ready'; trip: Trip; points: Point[] };
 
+type Places = {
+  start: PlaceLabel | null;
+  end: PlaceLabel | null;
+  pauses: (PlaceLabel | null)[];
+};
+
 export default function TripDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string }>();
   const id = params.id;
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
   const [exporting, setExporting] = useState(false);
+  const [places, setPlaces] = useState<Places>({ start: null, end: null, pauses: [] });
 
   const load = useCallback(async () => {
     if (!id) {
@@ -63,6 +72,52 @@ export default function TripDetailScreen() {
     if (state.kind !== 'ready') return [];
     return segmentByDay(state.points);
   }, [state]);
+
+  const pauses = useMemo(() => {
+    if (state.kind !== 'ready') return [];
+    return extractPauses(state.points);
+  }, [state]);
+
+  useEffect(() => {
+    if (state.kind !== 'ready' || state.points.length === 0) return;
+    const first = state.points[0];
+    const last = state.points[state.points.length - 1];
+    let cancelled = false;
+    (async () => {
+      const [start, end, ...pauseResults] = await Promise.all([
+        reverseGeocode(first.lat, first.lng),
+        reverseGeocode(last.lat, last.lng),
+        ...pauses.map((p) => reverseGeocode(p.center.lat, p.center.lng)),
+      ]);
+      if (!cancelled) setPlaces({ start, end, pauses: pauseResults });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [state, pauses]);
+
+  const markers = useMemo(
+    () =>
+      pauses.map((p, i) => {
+        const city = formatPlace(places.pauses[i] ?? null);
+        const dur = formatDuration(p.durationS);
+        return {
+          id: `pause-${i}`,
+          coordinates: { latitude: p.center.lat, longitude: p.center.lng },
+          title: city ? `${city} · ${dur}` : dur,
+          systemImage: 'pause.fill',
+          tintColor: COLORS.accent,
+        };
+      }),
+    [pauses, places.pauses],
+  );
+
+  const journey = useMemo(() => {
+    const startCity = formatPlace(places.start);
+    const endCity = formatPlace(places.end);
+    if (!startCity || !endCity) return null;
+    return `${startCity} → ${endCity}`;
+  }, [places.start, places.end]);
 
   const onExport = useCallback(async () => {
     if (state.kind !== 'ready') return;
@@ -128,10 +183,17 @@ export default function TripDetailScreen() {
         { label: 'Distance', value: `${formatKm(tripStats.distanceM)} km` },
         { label: 'Moving', value: formatDuration(tripStats.movingTimeS) },
         {
-          label: 'Avg moving',
+          label: 'Moving avg',
           value:
             tripStats.movingAvgMps > 0
               ? `${Math.round(mpsToKmh(tripStats.movingAvgMps))} km/h`
+              : '—',
+        },
+        {
+          label: 'Overall',
+          value:
+            tripStats.overallAvgMps > 0
+              ? `${Math.round(mpsToKmh(tripStats.overallAvgMps))} km/h`
               : '—',
         },
         {
@@ -147,7 +209,12 @@ export default function TripDetailScreen() {
       <Stack.Screen options={{ title: trip.name }} />
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.mapBox}>
-          <TripMap points={points} style={StyleSheet.absoluteFill} followLast={false} />
+          <TripMap
+            points={points}
+            style={StyleSheet.absoluteFill}
+            followLast={false}
+            markers={markers}
+          />
         </View>
 
         <Text style={styles.heading}>{trip.name}</Text>
@@ -155,9 +222,10 @@ export default function TripDetailScreen() {
           Started {format(new Date(trip.startedAt), 'EEE d MMM, HH:mm')}
           {trip.endedAt ? ` • Ended ${format(new Date(trip.endedAt), 'HH:mm')}` : ' • In progress'}
         </Text>
+        {journey ? <Text style={styles.journey}>{journey}</Text> : null}
 
         <StatsRow stats={summaryStats.slice(0, 2)} />
-        <StatsRow stats={summaryStats.slice(2, 4)} />
+        <StatsRow stats={summaryStats.slice(2, 5)} />
 
         {tripStats && tripStats.elevationGainM > 0 ? (
           <Text style={styles.elev}>+{Math.round(tripStats.elevationGainM)} m elevation gain</Text>
@@ -219,7 +287,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cardElevated,
   },
   heading: { color: COLORS.text, fontSize: 24, fontWeight: '700', marginTop: SPACING.sm },
-  subheading: { color: COLORS.textDim, fontSize: 14, marginBottom: SPACING.sm },
+  subheading: { color: COLORS.textDim, fontSize: 14 },
+  journey: { color: COLORS.text, fontSize: 14, fontWeight: '600', marginBottom: SPACING.sm },
   elev: { color: COLORS.textDim, fontSize: 13 },
   daysSection: {
     marginTop: SPACING.md,

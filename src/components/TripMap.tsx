@@ -9,9 +9,11 @@ type Props = {
   style?: object;
   /** Optional camera target; defaults to the last point if available. */
   followLast?: boolean;
+  /** Optional pins (e.g. pause locations). */
+  markers?: AppleMaps.Marker[];
 };
 
-export function TripMap({ points, style, followLast = true }: Props) {
+export function TripMap({ points, style, followLast = true, markers }: Props) {
   const segments = segmentByDay([...points]);
   const polylines = segments.map((s) => ({
     coordinates: s.points.map((p) => ({ latitude: p.lat, longitude: p.lng })),
@@ -30,6 +32,7 @@ export function TripMap({ points, style, followLast = true }: Props) {
         style={StyleSheet.absoluteFill}
         cameraPosition={cameraPosition}
         polylines={polylines}
+        markers={markers}
       />
     </View>
   );

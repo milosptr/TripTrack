@@ -12,7 +12,13 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/lib/**/*.ts'],
-      exclude: ['src/lib/db.ts', 'src/lib/locationTask.ts', 'src/lib/types.ts', 'src/lib/theme.ts'],
+      exclude: [
+        'src/lib/db.ts',
+        'src/lib/locationTask.ts',
+        'src/lib/geocode.ts',
+        'src/lib/types.ts',
+        'src/lib/theme.ts',
+      ],
       thresholds: {
         lines: 100,
         branches: 100,
