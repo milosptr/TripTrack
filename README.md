@@ -109,6 +109,15 @@ __fixtures__/         # GPX golden file + sample points
 - `preview` — internal distribution.
 - `production` — defined for completeness; not used for personal builds.
 
+## CI/CD
+
+`.github/workflows/eas-preview.yml` runs on push to `main`, on PRs against
+`main`, and via manual `workflow_dispatch`. The `verify` job runs typecheck,
+lint, and tests; on success it gates a `build-preview` job that triggers
+`eas build --profile preview --platform ios --no-wait` so the runner doesn't
+block on the EAS queue. Requires an `EXPO_TOKEN` repo secret with build
+permissions.
+
 ## Gotchas (do not violate)
 
 - `TaskManager.defineTask` is registered at module top level in

@@ -3,6 +3,9 @@ name: EAS preview build (iOS)
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       message:
@@ -10,7 +13,9 @@ on:
         required: false
 
 concurrency:
-  group: eas-preview-${{ github.ref }}
+  # Per-PR (or per-branch on push) so consecutive commits supersede earlier
+  # in-flight verify runs but never cancel an EAS build that's already queued.
+  group: eas-preview-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -59,7 +64,11 @@ jobs:
         env:
           # `--no-wait` returns once the build is queued so we don't burn ~20min
           # of Actions time per build. Track progress in the EAS dashboard.
-          BUILD_MESSAGE: ${{ inputs.message || format('main @ {0}', github.sha) }}
+          BUILD_MESSAGE: >-
+            ${{ inputs.message
+              || (github.event_name == 'pull_request'
+                  && format('PR #{0} @ {1}', github.event.pull_request.number, github.event.pull_request.head.sha)
+                  || format('main @ {0}', github.sha)) }}
         run: |
           eas build \
             --profile preview \
