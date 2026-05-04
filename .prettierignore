@@ -1,0 +1,12 @@
+node_modules
+.expo
+ios
+android
+coverage
+dist
+web-build
+package-lock.json
+__fixtures__/sample-trip.gpx
+triptracker-architecture.md
+CLAUDE.md
+README.md

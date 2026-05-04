@@ -1,0 +1,50 @@
+{
+  "trip": {
+    "id": "fixture-trip-001",
+    "name": "Reykjavík <test> & \"loop\"",
+    "startedAt": 1714982400000,
+    "endedAt": 1714986000000
+  },
+  "points": [
+    {
+      "id": 1,
+      "tripId": "fixture-trip-001",
+      "lat": 64.1466,
+      "lng": -21.9426,
+      "speed": 0,
+      "altitude": 30,
+      "accuracy": 5,
+      "timestamp": 1714982400000
+    },
+    {
+      "id": 2,
+      "tripId": "fixture-trip-001",
+      "lat": 64.1483,
+      "lng": -21.9423,
+      "speed": 5.5,
+      "altitude": 35,
+      "accuracy": 5,
+      "timestamp": 1714982460000
+    },
+    {
+      "id": 3,
+      "tripId": "fixture-trip-001",
+      "lat": 64.1502,
+      "lng": -21.9412,
+      "speed": -1,
+      "altitude": 40,
+      "accuracy": 6,
+      "timestamp": 1714982520000
+    },
+    {
+      "id": 4,
+      "tripId": "fixture-trip-001",
+      "lat": 64.1525,
+      "lng": -21.94,
+      "speed": 12.4,
+      "altitude": 42,
+      "accuracy": 4,
+      "timestamp": 1714982580000
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "TripTracker",
+    "slug": "triptracker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "triptracker",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "dev.milosptr.triptracker",
+      "supportsTablet": false,
+      "infoPlist": {
+        "UIBackgroundModes": ["location", "fetch"],
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "TripTracker records your route and speed during trips, including when the app is backgrounded.",
+        "NSLocationWhenInUseUsageDescription": "TripTracker records your route and speed during trips.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "TripTracker needs background access to record your full route while driving.",
+          "isIosBackgroundLocationEnabled": true
+        }
+      ],
+      "expo-maps",
+      "expo-sqlite"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
