@@ -77,8 +77,11 @@ export async function startTracking(): Promise<void> {
     throw new Error('Background location permission denied');
   }
 
-  const isRegistered = await TaskManager.isTaskRegisteredAsync(LOCATION_TASK);
-  if (!isRegistered) {
+  // Verify the JS task body was loaded. isTaskRegisteredAsync only flips true
+  // after startLocationUpdatesAsync, so checking it here would always fail on
+  // first launch — isTaskDefined is the correct sync check that the
+  // module-top-level defineTask() ran.
+  if (!TaskManager.isTaskDefined(LOCATION_TASK)) {
     throw new Error('Location task is not registered');
   }
 
