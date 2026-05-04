@@ -25,15 +25,15 @@ Once scaffolded, the spec defines these scripts:
 ```bash
 npm run start       # expo start
 npm run ios         # expo run:ios
-npm test            # jest
-npm run test:watch
-npm run test:cov
+npm test            # vitest run
+npm run test:watch  # vitest (watch mode is default)
+npm run test:cov    # vitest run --coverage (v8 provider)
 npm run lint        # expo lint
 npm run typecheck   # tsc --noEmit
 npm run check       # typecheck + lint + test (manual pre-commit)
 ```
 
-Run a single test: `npx jest path/to/file.test.ts` or `npx jest -t "test name"`.
+Run a single test: `npx vitest run path/to/file.test.ts` or `npx vitest run -t "test name"`.
 
 Always install Expo packages with `npx expo install <pkg>` — raw `npm install` will pull SDK-mismatched majors.
 
@@ -81,4 +81,6 @@ GPS readings flow: raw → filter → smooth → display + persist.
 
 ## Testing
 
-`jest-expo` preset, tests in `__tests__/`, fixtures in `__fixtures__/`. Coverage target 100% for `src/lib/**`. Don't write tests for `db.ts` or `locationTask.ts`; mock them if writing component tests, but keep component tests minimal — they're flaky with native modules.
+Vitest in the default Node environment, configured via `vitest.config.ts`. Tests live in `__tests__/`, fixtures in `__fixtures__/`. Coverage target 100% for `src/lib/**` via the v8 provider. Pure-logic modules import nothing native, so no Expo/RN preset is needed.
+
+Don't write tests for `db.ts` or `locationTask.ts`. If you ever add component tests, put them in a separate vitest project with `environment: 'jsdom'` and stub `expo-*` imports — do not try to load native modules under vitest. Keep component tests minimal; they're flaky with native modules.

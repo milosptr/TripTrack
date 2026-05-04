@@ -18,9 +18,8 @@ zustand                       ^5.x
 date-fns                      ^4.x
 
 # dev
-jest                          latest
-jest-expo                     ^55.0.0
-@types/jest                   latest
+vitest                        ^2.x
+@vitest/coverage-v8           ^2.x
 @testing-library/react-native ^13.x         # only if writing component tests
 ```
 
@@ -296,23 +295,36 @@ React 19 note: `ref` is a regular prop now — no `forwardRef` needed for any cu
   "scripts": {
     "start": "expo start",
     "ios": "expo run:ios",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
     "lint": "expo lint",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run lint && npm test"
-  },
-  "jest": {
-    "preset": "jest-expo",
-    "testMatch": ["**/__tests__/**/*.test.ts"],
-    "collectCoverageFrom": ["src/lib/**/*.ts"]
   }
 }
 ```
 
-**Test pure logic in `/src/lib`. Coverage target: 100%.**
+```ts
+// vitest.config.ts
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    include: ['__tests__/**/*.test.ts'],
+    environment: 'node',
+    coverage: {
+      provider: 'v8',
+      include: ['src/lib/**/*.ts'],
+    },
+  },
+});
+```
+
+Vitest runs the pure-logic suite in plain Node — no Expo/RN preset needed because nothing in `src/lib` imports native modules. If you ever write component tests, isolate them in a separate project with `jsdom` and stub out `expo-*` imports; do **not** try to load native modules under vitest.
+
+**Test pure logic in `/src/lib` with vitest. Coverage target: 100%.**
 
 - `distance.test.ts` — Haversine accuracy, point filtering, GPS jump detection
 - `speed.test.ts` — smoothing window, auto-pause threshold edges, `-1` handling
